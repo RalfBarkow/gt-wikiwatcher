@@ -17,6 +17,12 @@ GTWikiSitemapWatcher class >> httpURL: aString [
 ]
 
 { #category : #fetching }
+GTWikiSitemapWatcher >> fetchIfEmpty [
+	"Backward-compatibility no-op. Views no longer auto-fetch."
+	^ self
+]
+
+{ #category : #fetching }
 GTWikiSitemapWatcher >> fetchNow [
 	| client resp text json snap |
 	url ifNil: [ ^ self error: 'URL is nil' ].
@@ -50,13 +56,14 @@ GTWikiSitemapWatcher >> fetchNow [
 { #category : #'gt-views' }
 GTWikiSitemapWatcher >> gtDiffOn: aView [
 	<gtView>
-	self fetchIfEmpty.
 	^ (self history size <= 1)
 		ifTrue: [
 			aView text
 				title: 'Diff';
 				priority: 2;
-				text: [ 'Initial snapshot — no diff yet. Click "Fetch now" again to compute changes.' ] ]
+				text: [ (self history isEmpty
+					ifTrue: [ 'No snapshot yet. Click "Fetch now".' ]
+					ifFalse: [ 'Initial snapshot — no diff yet. Click "Fetch now" again to compute changes.' ]) ] ]
 		ifFalse: [
 			aView columnedList
 				title: 'Diff';
@@ -80,7 +87,6 @@ GTWikiSitemapWatcher >> gtDiffOn: aView [
 { #category : #'gt-views' }
 GTWikiSitemapWatcher >> gtHistoryOn: aView [
 	<gtView>
-	self fetchIfEmpty.
 	^ aView list
 		title: 'History';
 		priority: 3;
