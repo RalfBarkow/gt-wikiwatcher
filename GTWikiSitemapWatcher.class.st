@@ -53,6 +53,28 @@ GTWikiSitemapWatcher >> fetchNow [
 	^ snap
 ]
 
+{ #category : #fetching }
+GTWikiSitemapWatcher >> fetchNowAsyncWithTranscript [
+	"Run fetchNow in the background and stream progress to a transcript."
+	self openTranscriptIfAvailable.
+	[
+		| t0 |
+		self log: ('=== Fetch start: ' , url).
+		t0 := DateAndTime now.
+		[
+			self log: 'GET…'.
+			self fetchNow.
+			self log: ('OK — snapshots: ' , self history size asString ,
+				' | +' , lastDiff added size asString ,
+				' / ~' , lastDiff updated size asString ,
+				' / -' , lastDiff removed size asString).
+		] on: Error do: [ :e |
+			self log: ('ERROR: ' , e messageText).
+		].
+		self log: ('Finished in ' , ((DateAndTime now - t0) asDuration printString)).
+	] forkAt: Processor userBackgroundPriority
+]
+
 { #category : #'gt-views' }
 GTWikiSitemapWatcher >> gtDiffOn: aView [
 	<gtView>
@@ -105,7 +127,7 @@ GTWikiSitemapWatcher >> gtStatusOn: aView [
 					act button
 						label: 'Fetch now';
 						icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]);
-						action: [ self fetchNow ] ]
+						action: [ self fetchNowAsyncWithTranscript ] ]
 				ifFalse: [ ] ];
 		text: [
 			String streamContents: [ :s |
@@ -140,6 +162,31 @@ GTWikiSitemapWatcher >> initialize [
 { #category : #accessing }
 GTWikiSitemapWatcher >> lastDiff [
 	^ lastDiff
+]
+
+{ #category : #printing }
+GTWikiSitemapWatcher >> log: aString [
+	"Prefix with a short timestamp and write to whichever transcript we have."
+	| line ts tr |
+	ts := Time now print24.
+	line := '[GTWikiWatcher ' , ts , '] ' , aString.
+	(Smalltalk at: #GtTranscript ifAbsent: [ nil ])
+		ifNotNil: [ :gt | (gt respondsTo: #show:)
+			ifTrue: [ gt show: line; cr ] ].
+	tr := Smalltalk at: #Transcript ifAbsent: [ nil ].
+	tr ifNotNil: [ (tr respondsTo: #show:)
+		ifTrue: [ tr show: line; cr ] ]
+]
+
+{ #category : #printing }
+GTWikiSitemapWatcher >> openTranscriptIfAvailable [
+	"Try to open a transcript tool. Fall back to the classic Transcript."
+	| gt |
+	gt := Smalltalk at: #GtTranscript ifAbsent: [ nil ].
+	(gt notNil and: [ gt respondsTo: #open ])
+		ifTrue: [ gt open ].
+	(Smalltalk at: #Transcript ifAbsent: [ nil ]) ifNotNil: [ :tr |
+		(tr respondsTo: #open) ifTrue: [ tr open ] ]
 ]
 
 { #category : #printing }
