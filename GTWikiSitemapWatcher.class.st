@@ -77,41 +77,6 @@ GTWikiSitemapWatcher >> gtDiffOn: aView [
 				column: 'Date'   text: [ :row | | d | d := row third. d ifNil: [ '' ] ifNotNil: [ d asString ] ] ]
 ]
 
-{ #category : #'gt-actions' }
-GTWikiSitemapWatcher >> gtFetchNowActionFor: aComposite [
-	<gtAction>
-	"Work with multiple GT/Phlow versions."
-	(aComposite respondsTo: #actionButton) ifTrue: [
-		^ aComposite actionButton
-			label: 'Fetch now';
-			tooltip: 'Fetch sitemap.json (HTTP) and compute diff';
-			action: [ self fetchNow ] ].
-
-	(aComposite respondsTo: #action:icon:do:) ifTrue: [
-		^ aComposite
-			action: 'Fetch now'
-			icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ])
-			do: [ self fetchNow ] ].
-
-	(aComposite respondsTo: #button) ifTrue: [
-		^ aComposite button
-			label: 'Fetch now';
-			icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]);
-			action: [ self fetchNow ] ].
-
-	"Last-ditch fallback: embed a Brick button explicitly."
-	^ aComposite explicit
-		title: 'Fetch now';
-		stencil: [
-			| btn |
-			btn := BrButton new
-				aptitude: (Smalltalk at: #BrGlamorousButtonWithIconAptitude ifAbsent: [ BrButton new aptitude ]);
-				label: 'Fetch now';
-				action: [ self fetchNow ].
-			(Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | btn icon: i refresh ]).
-			btn ]
-]
-
 { #category : #'gt-views' }
 GTWikiSitemapWatcher >> gtHistoryOn: aView [
 	<gtView>
@@ -128,6 +93,14 @@ GTWikiSitemapWatcher >> gtStatusOn: aView [
 	^ aView text
 		title: 'Status';
 		priority: 1;
+		action: [ :act | 
+			(act respondsTo: #button)
+				ifTrue: [
+					act button
+						label: 'Fetch now';
+						icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]);
+						action: [ self fetchNow ] ]
+				ifFalse: [ ] ];
 		text: [
 			String streamContents: [ :s |
 				s nextPutAll: 'URL: '; nextPutAll: (url ifNil: [ '—' ]); cr.
