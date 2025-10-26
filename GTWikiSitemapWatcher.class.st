@@ -124,44 +124,29 @@ GTWikiSitemapWatcher >> gtStatusOn: aView [
 		priority: 1;
 		action: [ :act | 
 			(act respondsTo: #button)
-				ifTrue: [ act button
+				ifTrue: [
+					act button
 						label: 'Fetch now';
-						icon: (Smalltalk
-								at: #BrGlamorousVectorIcons
-								ifPresent: [ :i | i refresh ]
-								ifAbsent: [ nil ]);
-						action: [ self fetchNow ] ] ];
-		text: [ String
-				streamContents: [ :s | 
-					| fileRef sm |
-					s
-						nextPutAll: 'Host: ';
-						nextPutAll: self host;
-						cr.
-					fileRef := self sitemapFile.
-					s
-						nextPutAll: 'File: ';
-						nextPutAll: fileRef asString;
-						cr.
-					s
-						nextPutAll: 'Exists: ';
-						nextPutAll: (fileRef exists ifTrue: [ 'yes' ] ifFalse: [ 'no' ]);
-						cr.
-					sm := FwSiteMap forHost: self host.
-					s
-						nextPutAll: 'Pages: ';
-						nextPutAll: sm pages size asString;
-						cr.
-					s
-						nextPutAll: 'Last loaded: ';
-						nextPutAll: (sm lastLoadedAt ifNil: [ '—' ] ifNotNil: [ sm lastLoadedAt asString ]);
-						cr.
-					history isNil | history isEmpty
-						ifTrue: [ s nextPutAll: 'No snapshot yet. Click "Fetch now".' ]
-						ifFalse: [ s
-								nextPutAll: 'Snapshots: ';
-								nextPutAll: history size asString;
-								cr ] ] ]
+						icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]);
+						action: [ self fetchNowAsyncWithTranscript ] ]
+				ifFalse: [ ] ];
+		text: [
+			String streamContents: [ :s |
+				s nextPutAll: 'URL: '; nextPutAll: (url ifNil: [ '—' ]); cr.
+				s nextPutAll: 'Snapshots: '; nextPutAll: self history size asString; cr.
+				self history isEmpty
+					ifTrue: [ s nextPutAll: 'No snapshot yet. Click "Fetch now".' ]
+					ifFalse: [
+						self history size = 1
+							ifTrue: [
+								| n |
+								n := self history last pages size.
+								s nextPutAll: 'Initial snapshot — '; nextPutAll: n asString; nextPutAll: ' pages (baseline).' ]
+							ifFalse: [
+								s nextPutAll: 'Last diff — ';
+								nextPutAll: lastDiff added size asString; nextPutAll: ' added, ';
+								nextPutAll: lastDiff updated size asString; nextPutAll: ' updated, ';
+								nextPutAll: lastDiff removed size asString; nextPutAll: ' removed.' ] ] ] ]
 ]
 
 { #category : #accessing }
