@@ -43,7 +43,7 @@ watcher := GTWikiSitemapWatcher new
   yourself.
 
 "Open an inspector and use the Status/Diff/History/Raw tabs"
-watcher gtOpen.
+watcher inspect.
 ```
 
 * Click **Fetch now** in the **Status** tab.
