@@ -14,19 +14,13 @@ A tiny Glamorous Toolkit/Pharo tool that watches a Federated Wiki sitemap (`/sys
 * ZnNetworking for HTTP (usually present in GT).
 * No background processes; everything happens when you click.
 ## Installation
-### Option A — Iceberg (works now)
-
-1. In GT/Pharo: **Iceberg → Clone repository**
-   `https://github.com/RalfBarkow/gt-wikiwatcher`
-2. Open the repo in Iceberg → **Packages… → Add package from repository**
-   Select `GT-WikiWatcher`.
-3. Load. (The Tonel files live under `src/`.)
-### Option B — Metacello (once a Baseline is present)
 
 ```smalltalk
 Metacello new
   baseline: 'GtWikiWatcher';
   repository: 'github://RalfBarkow/gt-wikiwatcher:main/src';
+  onWarningLog;
+  onConflictUseIncoming; "avoids registry conflicts if you loaded from a different URL before"
   load.
 ```
 ## Quick start
