@@ -1,7 +1,6 @@
-# GT-WikiWatcher
+# Wiki Watcher
 
 A tiny Glamorous Toolkit/Pharo tool that watches a Federated Wiki sitemap (`/system/sitemap.json`), keeps a history of snapshots, and shows a computed diff (added / updated / removed slugs).
-
 ## Features (current)
 
 * Fetch sitemap on demand (`Fetch now` in the Status view).
@@ -9,15 +8,12 @@ A tiny Glamorous Toolkit/Pharo tool that watches a Federated Wiki sitemap (`/sys
 * Diff view with `added / updated / removed`.
 * “Raw” inspector for internals.
 * Transcript logging during fetch.
-
 ## Requirements
 
 * Glamorous Toolkit (GT) **or** Pharo with GT/Brick/Phlow loaded.
 * ZnNetworking for HTTP (usually present in GT).
 * No background processes; everything happens when you click.
-
 ## Installation
-
 ### Option A — Iceberg (works now)
 
 1. In GT/Pharo: **Iceberg → Clone repository**
@@ -25,7 +21,6 @@ A tiny Glamorous Toolkit/Pharo tool that watches a Federated Wiki sitemap (`/sys
 2. Open the repo in Iceberg → **Packages… → Add package from repository**
    Select `GT-WikiWatcher`.
 3. Load. (The Tonel files live under `src/`.)
-
 ### Option B — Metacello (once a Baseline is present)
 
 ```smalltalk
@@ -34,11 +29,10 @@ Metacello new
   repository: 'github://RalfBarkow/gt-wikiwatcher:main/src';
   load.
 ```
-
 ## Quick start
 
 ```smalltalk
-watcher := GTWikiSitemapWatcher new
+watcher := GtWikiSitemapWatcher new
   url: 'http://wiki.ralfbarkow.ch/system/sitemap.json';
   yourself.
 
@@ -49,12 +43,10 @@ watcher inspect.
 * Click **Fetch now** in the **Status** tab.
   You’ll see progress in the Transcript.
 * Open **Diff** to see changes between the last two snapshots.
-
 ## Tips
 
 * If you don’t see new data after fetching, click **Reload** on Diff/History (or click **Fetch now** again; the tool also asks Phlow to refresh the inspector).
 * For debugging, open **Raw** and expand `history` and `lastDiff`.
-
 ## Roadmap
 
 * Optional file-based/offline mode (guard HTTP via `self useHTTP`).

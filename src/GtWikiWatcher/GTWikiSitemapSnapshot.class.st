@@ -1,5 +1,5 @@
 Class {
-	#name : #GTWikiSitemapSnapshot,
+	#name : #GtWikiSitemapSnapshot,
 	#superclass : #Object,
 	#instVars : [
 		'takenAt',
@@ -10,7 +10,7 @@ Class {
 }
 
 { #category : #'instance creation' }
-GTWikiSitemapSnapshot class >> fromJson: aJson [
+GtWikiSitemapSnapshot class >> fromJson: aJson [
 	| snap norm items |
 	snap := self new.
 	snap takenAt: DateAndTime now.
@@ -52,27 +52,27 @@ GTWikiSitemapSnapshot class >> fromJson: aJson [
 ]
 
 { #category : #accessing }
-GTWikiSitemapSnapshot >> pages [
+GtWikiSitemapSnapshot >> pages [
 	^ pages ifNil: [ pages := Dictionary new ]
 ]
 
 { #category : #accessing }
-GTWikiSitemapSnapshot >> pages: aDict [
+GtWikiSitemapSnapshot >> pages: aDict [
 	pages := aDict
 ]
 
 { #category : #accessing }
-GTWikiSitemapSnapshot >> raw [
+GtWikiSitemapSnapshot >> raw [
 	^ raw
 ]
 
 { #category : #accessing }
-GTWikiSitemapSnapshot >> raw: aJson [
+GtWikiSitemapSnapshot >> raw: aJson [
 	raw := aJson
 ]
 
 { #category : #printing }
-GTWikiSitemapSnapshot >> summaryString [
+GtWikiSitemapSnapshot >> summaryString [
 	^ String streamContents: [ :s |
 		s nextPutAll: (takenAt ifNil: [ '—' ]) asString;
 		  nextPutAll: ' — ';
@@ -81,11 +81,11 @@ GTWikiSitemapSnapshot >> summaryString [
 ]
 
 { #category : #accessing }
-GTWikiSitemapSnapshot >> takenAt [
+GtWikiSitemapSnapshot >> takenAt [
 	^ takenAt
 ]
 
 { #category : #accessing }
-GTWikiSitemapSnapshot >> takenAt: aDateAndTime [
+GtWikiSitemapSnapshot >> takenAt: aDateAndTime [
 	takenAt := aDateAndTime
 ]

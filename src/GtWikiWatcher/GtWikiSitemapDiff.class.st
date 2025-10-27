@@ -12,7 +12,7 @@ Class {
 { #category : #computing }
 GtWikiSitemapDiff class >> between: oldSnap and: newSnap [
 	| old new add rem common upd |
-	old := oldSnap ifNil: [ GTWikiSitemapSnapshot new pages: Dictionary new; yourself ].
+	old := oldSnap ifNil: [ GtWikiSitemapSnapshot new pages: Dictionary new; yourself ].
 	new := newSnap.
 	add := new pages keys asSet copyWithoutAll: old pages keys.
 	rem := old pages keys asSet copyWithoutAll: new pages keys.

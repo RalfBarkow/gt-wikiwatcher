@@ -22,17 +22,19 @@ GtWikiSitemapWatcher class >> httpURL: aString [
 
 { #category : #'gt-views' }
 GtWikiSitemapWatcher >> ensureTranscriptOpen [
-	| tryOpen |
-	tryOpen := [ :sym | 
-		Smalltalk at: sym ifPresent: [ :cls | 
-			(cls respondsTo: #open)
-				ifTrue: [ cls open. ^ true ] ].
-		false ].
-	(tryOpen value: #GtTranscript)
-		or: [ (tryOpen value: #TranscriptBrowser)
-		or: [ (tryOpen value: #GtTranscriptTool) ] ].
-	"Fallback: nothing to open, but we still have Transcript stream"
-	^ nil.
+	| opened tryOpen |
+	opened := false.
+	tryOpen := [ :blk | [ blk value. opened := true ] on: Error, MessageNotUnderstood do: [ :e | ] ].
+
+	"Canonical tool opener (works on most GT/Pharo builds)"
+	tryOpen value: [ Smalltalk tools openTranscript ].
+
+	"Fallbacks for various GT/Pharo versions"
+	opened ifFalse: [ tryOpen value: [ (Smalltalk at: #GtTranscriptTool ifAbsent: [ nil ]) ifNotNil: #open ] ].
+	opened ifFalse: [ tryOpen value: [ (Smalltalk at: #GtTranscript ifAbsent: [ nil ]) ifNotNil: #open ] ].
+	opened ifFalse: [ tryOpen value: [ (Smalltalk at: #TranscriptBrowser ifAbsent: [ nil ]) ifNotNil: #open ] ].
+	opened ifFalse: [ tryOpen value: [ (Smalltalk at: #Transcript ifAbsent: [ nil ]) ifNotNil: #open ] ].
+	^ opened
 
 ]
 
@@ -63,7 +65,7 @@ GtWikiSitemapWatcher >> fetchNow [
 	text isEmpty ifTrue: [ ^ self error: 'Empty body' ].
 	json := [ NeoJSONReader fromString: text ]
 		on: Error do: [ :e | ^ self error: 'JSON parse failed: ', e messageText ].
-	snap := GTWikiSitemapSnapshot fromJson: json.
+	snap := GtWikiSitemapSnapshot fromJson: json.
 	self history add: snap.
 	lastDiff := (self history size > 1)
 		ifTrue: [ GtWikiSitemapDiff
@@ -71,6 +73,23 @@ GtWikiSitemapWatcher >> fetchNow [
 			and: snap ]
 		ifFalse: [ GtWikiSitemapDiff between: nil and: snap ].
 	^ snap
+]
+
+{ #category : #'gt-views' }
+GtWikiSitemapWatcher >> fetchNowAsyncFrom: aPhlowAction [
+	self ensureTranscriptOpen.
+	Transcript cr; show: '[GtWikiSitemapWatcher] Fetching '; show: (url ifNil: [ '—' ]); cr; flush.
+
+	[ 
+		[ 
+			self fetchNow.
+			Transcript show: '…done'; cr; flush.
+		] on: Error do: [ :ex |
+			Transcript show: '…failed: '; show: ex messageText; cr; flush ].
+
+		self refreshInspectorFrom: aPhlowAction
+	] forkAt: Processor userBackgroundPriority.
+
 ]
 
 { #category : #fetching }
@@ -154,13 +173,7 @@ GtWikiSitemapWatcher >> gtStatusOn: aView [
 				act button
 					label: 'Fetch now';
 					icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]);
-					action: [
-						self ensureTranscriptOpen.
-						Transcript cr; show: '[GtWikiSitemapWatcher] Fetching '; show: (url ifNil: [ '—' ]); cr.
-						[ self fetchNow.
-						  Transcript show: '…done'; cr.
-						] on: Error do: [ :ex | Transcript show: '…failed: '; show: ex messageText; cr ].
-						self refreshInspectorFrom: act ] ] ];
+					action: [ self fetchNowAsyncFrom: act ] ] ];
 		text: [
 			String streamContents: [ :s |
 				s nextPutAll: 'URL: '; nextPutAll: (url ifNil: [ '—' ]); cr.
