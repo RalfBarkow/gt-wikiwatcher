@@ -213,7 +213,7 @@ GtWikiSitemapWatcher >> log: aString [
 	"Prefix with a short timestamp and write to whichever transcript we have."
 	| line ts tr |
 	ts := Time now print24.
-	line := '[GTWikiWatcher ' , ts , '] ' , aString.
+	line := '[GtWikiWatcher ' , ts , '] ' , aString.
 	(Smalltalk at: #GtTranscript ifAbsent: [ nil ])
 		ifNotNil: [ :gt | (gt respondsTo: #show:)
 			ifTrue: [ gt show: line; cr ] ].
@@ -263,7 +263,7 @@ GtWikiSitemapWatcher >> sitemapFile [
 { #category : #printing }
 GtWikiSitemapWatcher >> storeOn: aStream [
 	aStream
-		nextPutAll: '(GTWikiSitemapWatcher httpURL: ';
+		nextPutAll: '(GtWikiSitemapWatcher httpURL: ';
 		nextPutAll: url storeString;
 		nextPutAll: ')'
 ]

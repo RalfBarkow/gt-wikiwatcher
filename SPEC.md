@@ -1,6 +1,6 @@
 # SPEC.md
 
-# Specification — GT-WikiWatcher
+# Specification — Wiki Watcher
 
 ## Terms
 
@@ -10,17 +10,17 @@
 
 ## Model
 
-* `GTWikiSitemapWatcher`
+* `GtWikiSitemapWatcher`
   * `url : String | nil`
-  * `history : OrderedCollection<GTWikiSitemapSnapshot>`
-  * `lastDiff : GTWikiSitemapDiff | nil`
+  * `history : OrderedCollection<GtWikiSitemapSnapshot>`
+  * `lastDiff : GtWikiSitemapDiff | nil`
   * (optional) `useHTTP : Boolean = true` (for offline/file mode)
 
-* `GTWikiSitemapSnapshot`
+* `GtWikiSitemapSnapshot`
   * `pages : Dictionary slug → { date?, title?, links?, ... }`
   * `takenAt : DateAndTime`
 
-* `GTWikiSitemapDiff`
+* `GtWikiSitemapDiff`
   * `added, updated, removed : Set<String>`
   * `isEmpty`, `fingerprint`
 
@@ -29,7 +29,7 @@
 * `fetchNow`
 
   * If `useHTTP`, GET `url` with timeout; else use file input.
-  * Parse JSON → `GTWikiSitemapSnapshot`.
+  * Parse JSON → `GtWikiSitemapSnapshot`.
   * Append to `history`.
   * If `history size >= 2`, compute `lastDiff`.
   * Log to Transcript.

@@ -5,13 +5,13 @@
 ## Phase 0 — Repo hygiene
 
 * [x] Split into `RalfBarkow/gt-wikiwatcher`.
-* [ ] Add `BaselineOfGTWikiWatcher` (Metacello).
+* [ ] Add `BaselineOfGtWikiWatcher` (Metacello).
 * [ ] CI: load baseline in headless Pharo/GT.
 
 ## Phase 1 — Core snapshots & diff (done/ongoing)
 
-* [x] Fetch + parse sitemap JSON into `GTWikiSitemapSnapshot`.
-* [x] Keep `history` and compute `GTWikiSitemapDiff`.
+* [x] Fetch + parse sitemap JSON into `GtWikiSitemapSnapshot`.
+* [x] Keep `history` and compute `GtWikiSitemapDiff`.
 * [x] GT Status/Diff/History/Raw views.
 * [x] Transcript logging and inspector refresh after fetch.
 * [ ] Unit smoke tests for diff on tiny fixtures.
