@@ -5,7 +5,10 @@ Class {
 		'url',
 		'history',
 		'lastDiff',
-		'host'
+		'host',
+		'added',
+		'updated',
+		'removed'
 	],
 	#category : #'GT-WikiWatcher'
 }
@@ -15,6 +18,22 @@ GTWikiSitemapWatcher class >> httpURL: aString [
 	^ self new
 		url: aString;
 		yourself
+]
+
+{ #category : #'gt-views' }
+GTWikiSitemapWatcher >> ensureTranscriptOpen [
+	| tryOpen |
+	tryOpen := [ :sym | 
+		Smalltalk at: sym ifPresent: [ :cls | 
+			(cls respondsTo: #open)
+				ifTrue: [ cls open. ^ true ] ].
+		false ].
+	(tryOpen value: #GtTranscript)
+		or: [ (tryOpen value: #TranscriptBrowser)
+		or: [ (tryOpen value: #GtTranscriptTool) ] ].
+	"Fallback: nothing to open, but we still have Transcript stream"
+	^ nil.
+
 ]
 
 { #category : #fetching }
@@ -84,27 +103,32 @@ GTWikiSitemapWatcher >> gtDiffOn: aView [
 			aView text
 				title: 'Diff';
 				priority: 2;
-				text: [ (self history isEmpty
-					ifTrue: [ 'No snapshot yet. Click "Fetch now".' ]
-					ifFalse: [ 'Initial snapshot — no diff yet. Click "Fetch now" again to compute changes.' ]) ] ]
+				action: [ :act | (act respondsTo: #button)
+					ifTrue: [ act button label: 'Reload'; icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]); action: [ self refreshInspectorFrom: act ] ] ];
+				text: [
+					self history isEmpty
+						ifTrue: [ 'No snapshot yet. Click "Fetch now".' ]
+						ifFalse: [ 'Initial snapshot — no diff yet. Click "Fetch now" again to compute changes.' ] ] ]
 		ifFalse: [
-			aView columnedList
-				title: 'Diff';
-				priority: 2;
-				items: [
-					| now rows |
-					now := DateAndTime now.
-					rows :=
-						(lastDiff added collect: [ :slug | { 'added'. slug. now } ]) ,
-						(lastDiff updated collect: [ :slug |
-							| nd |
-							nd := ((self history last pages at: slug ifAbsent: [ Dictionary new ]) at: #date ifAbsent: [ nil ]).
-							{ 'updated'. slug. nd } ]) ,
-						(lastDiff removed collect: [ :slug | { 'removed'. slug. nil } ]).
-					rows ];
-				column: 'Change' text: [ :row | row first ];
-				column: 'Slug'   text: [ :row | row second ];
-				column: 'Date'   text: [ :row | | d | d := row third. d ifNil: [ '' ] ifNotNil: [ d asString ] ] ]
+			((lastDiff ifNil: [ GTWikiSitemapDiff new ]) isEmpty)
+				ifTrue: [
+					aView text
+						title: 'Diff';
+						priority: 2;
+						action: [ :act | (act respondsTo: #button)
+							ifTrue: [ act button label: 'Reload'; icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]); action: [ self refreshInspectorFrom: act ] ] ];
+						text: [ 'No changes since the previous snapshot.' ] ]
+				ifFalse: [
+					aView columnedList
+						title: 'Diff';
+						priority: 2;
+						action: [ :act | (act respondsTo: #button)
+							ifTrue: [ act button label: 'Reload'; icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]); action: [ self refreshInspectorFrom: act ] ] ];
+						items: [ self rowsForLastDiff ];
+						column: 'Change' text: [ :row | row first ];
+						column: 'Slug'   text: [ :row | row second ];
+						column: 'Date'   text: [ :row | (row third ifNil: [ '' ] ifNotNil: [ :d | d asString ]) ] ] ].
+
 ]
 
 { #category : #'gt-views' }
@@ -113,7 +137,10 @@ GTWikiSitemapWatcher >> gtHistoryOn: aView [
 	^ aView list
 		title: 'History';
 		priority: 3;
-		items: [ self history collect: #summaryString ]
+		action: [ :act | (act respondsTo: #button)
+			ifTrue: [ act button label: 'Reload'; icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]); action: [ self refreshInspectorFrom: act ] ] ];
+		items: [ self history collect: #summaryString ].
+
 ]
 
 { #category : #'gt-views' }
@@ -122,14 +149,18 @@ GTWikiSitemapWatcher >> gtStatusOn: aView [
 	^ aView text
 		title: 'Status';
 		priority: 1;
-		action: [ :act | 
-			(act respondsTo: #button)
-				ifTrue: [
-					act button
-						label: 'Fetch now';
-						icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]);
-						action: [ self fetchNowAsyncWithTranscript ] ]
-				ifFalse: [ ] ];
+		action: [ :act |
+			(act respondsTo: #button) ifTrue: [
+				act button
+					label: 'Fetch now';
+					icon: (Smalltalk at: #BrGlamorousVectorIcons ifPresent: [ :i | i refresh ] ifAbsent: [ nil ]);
+					action: [
+						self ensureTranscriptOpen.
+						Transcript cr; show: '[GTWikiSitemapWatcher] Fetching '; show: (url ifNil: [ '—' ]); cr.
+						[ self fetchNow.
+						  Transcript show: '…done'; cr.
+						] on: Error do: [ :ex | Transcript show: '…failed: '; show: ex messageText; cr ].
+						self refreshInspectorFrom: act ] ] ];
 		text: [
 			String streamContents: [ :s |
 				s nextPutAll: 'URL: '; nextPutAll: (url ifNil: [ '—' ]); cr.
@@ -138,15 +169,9 @@ GTWikiSitemapWatcher >> gtStatusOn: aView [
 					ifTrue: [ s nextPutAll: 'No snapshot yet. Click "Fetch now".' ]
 					ifFalse: [
 						self history size = 1
-							ifTrue: [
-								| n |
-								n := self history last pages size.
-								s nextPutAll: 'Initial snapshot — '; nextPutAll: n asString; nextPutAll: ' pages (baseline).' ]
-							ifFalse: [
-								s nextPutAll: 'Last diff — ';
-								nextPutAll: lastDiff added size asString; nextPutAll: ' added, ';
-								nextPutAll: lastDiff updated size asString; nextPutAll: ' updated, ';
-								nextPutAll: lastDiff removed size asString; nextPutAll: ' removed.' ] ] ] ]
+							ifTrue: [ s nextPutAll: 'Initial snapshot — click "Fetch now" again to compute changes.' ]
+							ifFalse: [ s nextPutAll: 'Diff available. Open the Diff tab.' ] ] ] ].
+
 ]
 
 { #category : #accessing }
@@ -193,6 +218,28 @@ GTWikiSitemapWatcher >> openTranscriptIfAvailable [
 		ifTrue: [ gt open ].
 	(Smalltalk at: #Transcript ifAbsent: [ nil ]) ifNotNil: [ :tr |
 		(tr respondsTo: #open) ifTrue: [ tr open ] ]
+]
+
+{ #category : #'as yet unclassified' }
+GTWikiSitemapWatcher >> refreshInspectorFrom: aPhlowAction [
+	"Politely ask Phlow to rebuild the whole inspector; ignore older GT builds."
+	[ aPhlowAction phlow fireToolUpdateWish ] on: MessageNotUnderstood do: [ :ex | ].
+
+]
+
+{ #category : #'gt-views' }
+GTWikiSitemapWatcher >> rowsForLastDiff [
+	| now curr |
+	now := DateAndTime now.
+	curr := self history last.
+	^ (lastDiff added collect: [ :slug | { 'added'. slug. now } ])
+		, (lastDiff updated collect: [ :slug | 
+			| pageDate |
+			pageDate := (curr pages at: slug ifAbsent: [ nil ])
+				ifNotNil: [ :p | p at: #date ifAbsent: [ nil ] ].
+			{ 'updated'. slug. pageDate } ])
+		, (lastDiff removed collect: [ :slug | { 'removed'. slug. nil } ]).
+
 ]
 
 { #category : #'as yet unclassified' }

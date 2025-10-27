@@ -41,6 +41,17 @@ GTWikiSitemapDiff >> added: aCollection [
 	added := aCollection
 ]
 
+{ #category : #'as yet unclassified' }
+GTWikiSitemapDiff >> fingerprint [
+	^ { added size. updated size. removed size } hash.
+]
+
+{ #category : #'as yet unclassified' }
+GTWikiSitemapDiff >> isEmpty [
+	^ added isEmpty and: [ updated isEmpty and: [ removed isEmpty ] ].
+
+]
+
 { #category : #accessing }
 GTWikiSitemapDiff >> removed [
 	^ removed ifNil: [ #() ]
