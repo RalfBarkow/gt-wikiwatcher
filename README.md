@@ -30,7 +30,7 @@ A tiny Glamorous Toolkit/Pharo tool that watches a Federated Wiki sitemap (`/sys
 
 ```smalltalk
 Metacello new
-  baseline: 'GTWikiWatcher';
+  baseline: 'GtWikiWatcher';
   repository: 'github://RalfBarkow/gt-wikiwatcher:main/src';
   load.
 ```
