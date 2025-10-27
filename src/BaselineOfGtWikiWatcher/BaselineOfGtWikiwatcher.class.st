@@ -1,11 +1,11 @@
 Class {
-	#name : #BaselineOfGtWikiwatcher,
+	#name : #BaselineOfGtWikiWatcher,
 	#superclass : #BaselineOf,
 	#category : #BaselineOfGtWikiWatcher
 }
 
 { #category : #baseline }
-BaselineOfGtWikiwatcher >> baseline: spec [
+BaselineOfGtWikiWatcher >> baseline: spec [
 	<baseline>
 		^ spec for: #common do: [
 			spec package: 'GtWikiWatcher'
